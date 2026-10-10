@@ -1,0 +1,31 @@
+{
+  "python": "3.12.14",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "machine": "arm64",
+  "processor": "arm",
+  "device": "CPU",
+  "threads": 1,
+  "versions": {
+    "torch": "2.14.1",
+    "numpy": "2.3.5",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2"
+  },
+  "split_sizes": {
+    "train": 1077,
+    "validation": 360,
+    "test": 360
+  },
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "prediction_samples": 1024,
+  "validation_samples": 128,
+  "noise_seed": 2026,
+  "split_seed": 42
+}
