@@ -1,46 +1,52 @@
-# Bayesian Handwritten Digit Recognition
+# CISC3024 AI Assignment 2 — ICML 2026 study
 
-CISC3024 AI Assignment 2, October 2026. All implementation code and report preparation were performed by the Codex AI assistant.
+Main algorithm: **Richer Bayesian Last Layers with Subsampled NTK Features** (Calvo Ordoñez et al., ICML 2026), [official proceedings](https://proceedings.mlr.press/v306/calvo-ordonez26a.html).
 
-This is an independent educational implementation of the **diagonal discriminative Variational Bayesian Last Layer** (VBLL) formulation, based on Theorem 2 / Eq. 14 of Harrison, Willes and Snoek, ICLR 2024: https://arxiv.org/abs/2404.11599
+This AI-written educational implementation studies the paper's **class-specific** option on a small digits MLP. The paper's main classification experiment uses a global transformation and a CIFAR CNN; these results are not a reproduction of that benchmark. The independent Gaussian-logit model uses a Gaussian surrogate covariance, not an exact categorical posterior. VBLL (ICLR 2024) is a separately trained baseline.
 
-The implementation uses a standard normal weight prior, a diagonal variational covariance, and zero additional logit noise. It is not a reproduction of the paper's large-scale benchmarks, and it does not depend on the authors' `vbll` package. The authors' separate implementation is https://github.com/VectorInstitute/vbll .
+## Reproduce
 
-## Run
+Tested on Python 3.12.14, CPU, one PyTorch thread. Install the pinned packages in a fresh environment, then run from this directory:
 
-Use Python 3.12 and a CPU. From this folder:
-
-```bash
+```sh
 python -m pip install -r requirements.txt
-python -m unittest discover -v
-python experiment.py --output results
-python plot_results.py --results results
+python -m unittest discover -p 'test_*.py'
+python experiment2026.py --output results2026 --cache data_cache
+python plot_results2026.py --results results2026
 ```
 
-The 8 x 8 digit image dataset is bundled with scikit-learn; a separate dataset download is unnecessary. The stratified train/validation/test split is fixed at random seed 42. Runs use training seeds 0 through 4. Exact timing and minor numerical differences depend on the machine and software versions.
+The first run downloads the official Fashion-MNIST test images and verifies their MD5. Internet access is required for that download. The local dataset cache is not part of the source archive. Runtime and small floating-point differences depend on hardware and package support; see saved environment metadata.
+
+## Methods and protocol
+
+Seven configurations: Softmax MLP, diagonal VBLL 2024, ordinary BLL, full Rich-BLL, and Rich-BLL with k=256,128,64. Digits split: 1077 train / 360 validation / 360 test, stratified seed 42. Five training seeds 0–4. Architecture 64→64 ReLU→32 ReLU→10. Adam .001, batch 64, up to 150 epochs, checkpoint chosen by validation NLL. Rich-BLL ridge=1 and noise variance=.1. Subsample posterior Gram is scaled N/k. 1024 Gaussian-logit predictive samples. Clothing OOD: 1000 Fashion-MNIST test images, bilinear resized to 8×8, indices fixed by seed 2026. Also test pixel noise .2/.4 and fixed pixel permutation.
+
+All covariance variants share the softmax backbone and mean logits. Exact earlier-layer scalar-logit gradients form class-specific corrections G=I+AᵀA. Full Jacobians are computed once and reused for all subset ablations; saved fitting times exclude this shared extraction, training, and prediction. They are not an optimized end-to-end subset timing benchmark.
+
+## Main measured findings
+
+- Clean accuracy: full Rich-BLL 96.28% ± 0.58%; VBLL 97.44% ± 0.36%.
+- Clean NLL: full Rich-BLL .113455; ordinary BLL .113455. The difference is negligible.
+- Variance OOD AUROC: full Rich-BLL .9354 ± .0291 on permuted digit pixels, but .6133 ± .0302 on resized clothing.
+- All full-data Rich-BLL clean logit variances are at least BLL variances; larger variance does not imply better recognition or OOD ranking.
+- Ten numerical tests pass. MC convergence, raw rows and predictions are included.
+
+For variance AUROC, every model uses the class selected by the shared pretrained softmax mean, including the separate VBLL model. Predictive entropy and selected-logit variance are different scores.
 
 ## Files
 
-- `experiment.py`: model, deterministic variational loss, training and evaluation.
-- `test_experiment.py`: Gaussian KL, sampled weight/logit moments, Jensen bound and gradient, probability and metric checks.
-- `plot_results.py`: figures derived from the result files.
-- `AI_WORKFLOW.md`: actual user request, search queries and a truthful summary of AI work.
-- `results/metrics.csv`: one row per model, seed and test condition.
-- `results/summary.json`: means and sample standard deviations across five runs.
-- `results/predictions.npz`: probabilities, labels and indices used for verification.
-- `results/history.json`: training loss and validation negative log likelihood.
-- `results/split_indices.json`: exact dataset partition.
-- `results/environment.json`: software versions and execution environment.
-- `results/*_seed0.pt`: selected seed 0 model weights.
+- `experiment2026.py`: current experiment; imports training utilities from `experiment.py`.
+- `test_experiment2026.py`, `test_experiment.py`: six new and four baseline checks.
+- `plot_results2026.py`: plots from saved current outputs.
+- `results2026/`: metrics, OOD scores, timing, convergence, predictions, models, indices and figures.
+- `AI_WORKFLOW2026.md`: actual request, AI search and implementation record.
+- Original `plot_results.py`, `AI_WORKFLOW.md`, and `results/` are the earlier 2024-only study. Use the 2026 entry point for the revised assignment.
 
-## Method and interpretation
+## References
 
-For features h augmented by a constant bias feature, each class row has a Gaussian approximate posterior q(w_k) = N(m_k, diag(v_k)). A logit has mean m_k^T h and variance v_k^T h^2. The batch objective is the mean of `logsumexp(mean + variance / 2) - mean_of_true_class`, plus Gaussian KL divided by the training set size. Training uses no posterior sampling. Prediction averages 1,024 sampled Gaussian-logit softmax vectors; checkpoint selection uses 128 samples and validation labels only.
+1. [Richer Bayesian Last Layers, ICML 2026](https://proceedings.mlr.press/v306/calvo-ordonez26a.html); [full equations and appendix](https://arxiv.org/html/2602.01279v2).
+2. [Variational Bayesian Last Layers, ICLR 2024](https://arxiv.org/abs/2404.11599).
+3. [scikit-learn digits](https://scikit-learn.org/stable/modules/generated/sklearn.datasets.load_digits.html).
+4. [Official Fashion-MNIST dataset](https://github.com/zalandoresearch/fashion-mnist).
 
-Both methods share the feature architecture, feature initialization and mini-batch sequence for each seed. Baseline loss and head regularization differ from VBLL as documented in the report. The comparison therefore evaluates the full training methods and does not isolate the effect of posterior averaging alone.
-
-Clean data and Gaussian corruption of standard deviations 0.2 and 0.4 are evaluated on the same held-out test images. A fixed pixel permutation is used only as a synthetic distribution-shift probe. Its entropy AUROC does not establish performance on genuine external out-of-distribution datasets. Reported entropy is predictive uncertainty, not a pure estimate of epistemic uncertainty.
-
-## Publishing the source webpage
-
-Create a public GitHub repository named `cisc3024-ai-assignment2`, then upload this folder's contents. Open the repository while signed out to verify public access. Use that repository's actual URL in section 6 of the report. The authors' upstream repository is a reference and must not be presented as the student's own source code.
+All implementation code was generated by AI for this assignment. No claim of author-code reuse or full original-paper benchmark reproduction is made.
