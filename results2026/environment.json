@@ -1,0 +1,32 @@
+{
+  "python": "3.12.14",
+  "platform": "macOS-27.0.1-arm64-arm-64bit",
+  "device": "CPU",
+  "threads": 1,
+  "versions": {
+    "torch": "2.14.1",
+    "numpy": "2.3.5",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "matplotlib": "3.11.2",
+    "Pillow": "12.3.0"
+  },
+  "fashion": {
+    "url": "https://raw.githubusercontent.com/zalandoresearch/fashion-mnist/master/data/fashion/t10k-images-idx3-ubyte.gz",
+    "md5": "bef4ecab320f06d8554ea6380940ec79"
+  },
+  "ridge": 1.0,
+  "noise_variance": 0.1,
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "train": 1077,
+  "validation": 360,
+  "test": 360,
+  "fashion_ood": 1000,
+  "prediction_samples": 1024
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "seed": 0,
+    "min_rich_minus_bll_variance": 1.1419544816483086e-06
+  },
+  {
+    "seed": 1,
+    "min_rich_minus_bll_variance": 5.573953187156845e-07
+  },
+  {
+    "seed": 2,
+    "min_rich_minus_bll_variance": 5.805038419266469e-07
+  },
+  {
+    "seed": 3,
+    "min_rich_minus_bll_variance": 4.899327001259019e-07
+  },
+  {
+    "seed": 4,
+    "min_rich_minus_bll_variance": 4.13229782799231e-07
+  }
+]
